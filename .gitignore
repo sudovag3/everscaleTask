@@ -1,0 +1,5 @@
+node_modules/
+.idea/
+/locklift.config.js
+migration-log.json
+build/Test*

@@ -1,0 +1,73 @@
+{
+	"ABI version": 2,
+	"version": "2.2",
+	"header": ["pubkey", "time", "expire"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+				{"name":"_state","type":"uint256"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "onAcceptTokensTransfer",
+			"inputs": [
+				{"name":"tokenRoot","type":"address"},
+				{"name":"amount","type":"uint128"},
+				{"name":"sender","type":"address"},
+				{"name":"senderWallet","type":"address"},
+				{"name":"remainingGasTo","type":"address"},
+				{"name":"payload","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "total_supply",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"total_supply","type":"uint128"}
+			]
+		},
+		{
+			"name": "TOKEN_A_ADDRESS",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"TOKEN_A_ADDRESS","type":"address"}
+			]
+		},
+		{
+			"name": "TOKEN_B_ADDRESS",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"TOKEN_B_ADDRESS","type":"address"}
+			]
+		}
+	],
+	"data": [
+	],
+	"events": [
+		{
+			"name": "StateChange",
+			"inputs": [
+				{"name":"_state","type":"uint256"}
+			],
+			"outputs": [
+			]
+		}
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_timestamp","type":"uint64"},
+		{"name":"_constructorFlag","type":"bool"},
+		{"name":"total_supply","type":"uint128"},
+		{"name":"state","type":"uint256"},
+		{"name":"TOKEN_A_ADDRESS","type":"address"},
+		{"name":"TOKEN_B_ADDRESS","type":"address"}
+	]
+}

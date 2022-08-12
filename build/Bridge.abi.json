@@ -1,0 +1,65 @@
+{
+	"ABI version": 2,
+	"version": "2.2",
+	"header": ["pubkey", "time", "expire"],
+	"functions": [
+		{
+			"name": "constructor",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "onAcceptTokensTransfer",
+			"inputs": [
+				{"name":"tokenRoot","type":"address"},
+				{"name":"amount","type":"uint128"},
+				{"name":"sender","type":"address"},
+				{"name":"senderWallet","type":"address"},
+				{"name":"remainingGasTo","type":"address"},
+				{"name":"payload","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "total_supply",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"total_supply","type":"uint128"}
+			]
+		},
+		{
+			"name": "TOKEN_B_ADDRESS",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"TOKEN_B_ADDRESS","type":"address"}
+			]
+		},
+		{
+			"name": "tokenRootMaster",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"tokenRootMaster","type":"address"}
+			]
+		}
+	],
+	"data": [
+		{"key":1,"name":"randomNonce_","type":"uint256"}
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_timestamp","type":"uint64"},
+		{"name":"_constructorFlag","type":"bool"},
+		{"name":"randomNonce_","type":"uint256"},
+		{"name":"total_supply","type":"uint128"},
+		{"name":"TOKEN_B_ADDRESS","type":"address"},
+		{"name":"tokenRootMaster","type":"address"}
+	]
+}
