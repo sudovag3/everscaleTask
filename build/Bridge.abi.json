@@ -6,6 +6,16 @@
 		{
 			"name": "constructor",
 			"inputs": [
+				{"name":"tokenA","type":"address"},
+				{"name":"tokenB","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "onGetDeployedA",
+			"inputs": [
+				{"name":"_address","type":"address"}
 			],
 			"outputs": [
 			]
@@ -40,6 +50,22 @@
 			]
 		},
 		{
+			"name": "TOKEN_A_ADDRESS",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"TOKEN_A_ADDRESS","type":"address"}
+			]
+		},
+		{
+			"name": "walletB",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"walletB","type":"address"}
+			]
+		},
+		{
 			"name": "tokenRootMaster",
 			"inputs": [
 			],
@@ -60,6 +86,8 @@
 		{"name":"randomNonce_","type":"uint256"},
 		{"name":"total_supply","type":"uint128"},
 		{"name":"TOKEN_B_ADDRESS","type":"address"},
+		{"name":"TOKEN_A_ADDRESS","type":"address"},
+		{"name":"walletB","type":"address"},
 		{"name":"tokenRootMaster","type":"address"}
 	]
 }

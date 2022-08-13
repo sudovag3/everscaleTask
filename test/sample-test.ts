@@ -3,6 +3,7 @@ import { Contract, Signer, Address } from "locklift";
 import { FactorySource } from "../build/factorySource";
 import { zeroAddress } from 'locklift';
 import {BigNumber} from 'bignumber.js'
+import { log } from "console";
 
 // Тут перечислены основные константы прямиком из utils.js Их по хорошему нужно отдельно вынести, но, думаю, для тестового задания, не критично
 const EMPTY_TVM_CELL = 'te6ccgEBAQEAAgAAAA==';
@@ -32,7 +33,7 @@ let account: Contract<FactorySource["Wallet"]>;
 let tokenA: Contract<FactorySource["TokenRoot"]>;
 let tokenB: Contract<FactorySource["TokenRoot"]>;
 
-
+let accountWallet: Contract<FactorySource["TokenWallet"]>;
 let signer: Signer;
 
 describe("Test Bridge contract", async function () {
@@ -49,20 +50,7 @@ describe("Test Bridge contract", async function () {
       expect(bridgeData.tvc).not.to.equal(undefined, "tvc should be available");
     });
     //Тут все ок, отрабатывает без замечаний, пока не разбирался с внутренними переменными
-    it("Deploy bridge contract", async function () {
-      const { contract } = await locklift.factory.deployContract({
-        contract: "Bridge",
-        publicKey: signer.publicKey,
-        initParams: {
-          randomNonce_: locklift.utils.getRandomNonce(),
-        },
-        constructorParams: {
-        },
-        value: locklift.utils.toNano(2),
-      });
-      bridge = contract;
-      console.log(`Account - ${bridge.address}`);
-    });
+
     //Аналогично
     it("Deploy account contract", async function () {
       const { contract } = await locklift.factory.deployContract({
@@ -73,7 +61,7 @@ describe("Test Bridge contract", async function () {
         },
         constructorParams: {
         },
-        value: locklift.utils.toNano(2),
+        value: locklift.utils.toNano(50),
       });
       account = contract;
       console.log(`Account - ${account.address}`);
@@ -85,7 +73,7 @@ describe("Test Bridge contract", async function () {
       //беру тестовые названия токенов
       let tokenData = Constants.tokens.foo;
 
-      let { contract } = await locklift.factory.deployContract({
+      let { contract } = await locklift.tracing.trace(locklift.factory.deployContract({
         contract: "TokenRoot",
         publicKey: signer.publicKey,
         initParams: {
@@ -98,18 +86,19 @@ describe("Test Bridge contract", async function () {
           rootOwner_: account.address
         },
         constructorParams: {
-          initialSupplyTo: new Address(zeroAddress),
-          initialSupply: '1000000',
-          deployWalletValue: '0',
+          initialSupplyTo: account.address,
+          initialSupply: locklift.utils.toNano(8),
+          deployWalletValue: locklift.utils.toNano(0.5),
           mintDisabled: false,
           burnByRootDisabled: true,
           burnPaused: true,
           remainingGasTo: new Address(zeroAddress)
         },
-        value: locklift.utils.toNano(2),
-      });
+        value: locklift.utils.toNano(10),
+      }));
       tokenA = contract;
       console.log(`Token A - ${tokenA.address}`);
+      expect(await locklift.provider.getFullContractState({ address: tokenA.address }).then(res => res.state?.isDeployed)).to.be.true;
     });
 
     it("Deploy token B contract", async function () {
@@ -130,148 +119,80 @@ describe("Test Bridge contract", async function () {
           rootOwner_: account.address
         },
         constructorParams: {
-          initialSupplyTo: new Address(zeroAddress),
-          initialSupply: '1000000',
-          deployWalletValue: '0',
+          initialSupplyTo: account.address,
+          initialSupply: locklift.utils.toNano(8),
+          deployWalletValue: locklift.utils.toNano(1.5),
           mintDisabled: false,
           burnByRootDisabled: true,
           burnPaused: true,
           remainingGasTo: new Address(zeroAddress)
         },
-        value: locklift.utils.toNano(2),
+        value: locklift.utils.toNano(10),
       });
       tokenB = contract;
       console.log(`Token B - ${tokenB.address}`);
+      expect(await locklift.provider.getFullContractState({ address: tokenB.address }).then(res => res.state?.isDeployed)).to.be.true;
+
+    });
+
+    it("Deploy bridge contract", async function () {
+      const accountwalletB = await tokenB.methods.walletOf({answerId: 1,walletOwner: account.address}).call();
+      expect(await locklift.provider.getFullContractState({ address: accountwalletB.value0 }).then(res => res.state?.isDeployed)).to.be.true;
+      const { contract } = await locklift.factory.deployContract({
+        contract: "Bridge",
+        publicKey: signer.publicKey,
+        initParams: {
+          randomNonce_: locklift.utils.getRandomNonce(),
+        },
+        constructorParams: {
+          tokenA: tokenA.address,
+          tokenB: tokenB.address
+        },
+        value: locklift.utils.toNano(50),
+      });
+      bridge = contract;
+      expect(await locklift.provider.getFullContractState({ address: bridge.address }).then(res => res.state?.isDeployed)).to.be.true;
+      console.log(`Bridge - ${bridge.address}`);
     });
 
     it("mint token A for account", async function () {
-
-      // Вот здесь сейчас тупик
-      // Застрял на том, чтобы вызвать функцию mint в контракте tokenA
-
-      /*
-      Это из доки уже не работает(((((
-
-      await rootOwner.runTarget({
-      contract: tokenRoot,
-      method: 'mint',
-      params: {
-        amount: amount,
-        recipient: account.address,
-        deployWalletValue: locklift.utils.convertCrystal(0.2, 'nano'),
-        remainingGasTo: rootOwner.address,
-        notify: false,
-        payload: EMPTY_TVM_CELL
-      },
-      value: locklift.utils.convertCrystal(0.5, 'nano'),
-      keyPair
-      });
-      */
-      
-      //Пошел более правильным путём
-      const mint =  
-      {
-        amount: 1100,
-        token: 'foo'
-      };
-      const token = Constants.tokens['foo'];
-      const amount = new BigNumber(mint.amount).shiftedBy(token.decimals).toFixed();
-      const accountFactory = locklift.factory.getAccountsFactory("Wallet");
-
-      const rootOwner = accountFactory.getAccount(account.address, signer.publicKey);
-      
-    
-    const txTarget = await rootOwner.runTarget({
-        contract: tokenA,
-        value: locklift.utils.toNano(2.2)
-        },
-        root =>
-          root.methods.mint({ 
-            amount: amount, 
-            recipient: rootOwner.address, 
-            deployWalletValue: locklift.utils.toNano(1), 
-            remainingGasTo: rootOwner.address, 
-            notify: true, 
-            payload: EMPTY_TVM_CELL, 
-            }),
-        );
-        
-      //увы и ах
-
-      // const wallet = await tokenA.methods.deployWallet({
-      //   answerId: 1, 
-      //   walletOwner: account.address,
-      //   deployWalletValue: locklift.utils.toNano(0.5)
-      // }).call();
-      // const walletContract = await locklift.factory.getDeployedContract("TokenWallet", wallet.tokenWallet);
-      // console.log(walletContract);
-      
-      // const walletContract = await locklift.factory.getDeployedContract("TokenWallet", wallet.tokenWallet);
-      // const walletTokenBalance = await walletContract.methods.balance({answerId: 0}).call();
-      // console.log(`walletTokenBalane = ${walletTokenBalance}`);
-      
-      // const transaction = await locklift.transactions.waitFinalized(tokenA.methods.deployWallet({
-      //   answerId: 1, 
-      //   walletOwner: account.address,
-      //   deployWalletValue: '0'
-      // }))
-
-      // console.log(wallet.tokenWallet);
-
-        // const txTarget = await rootOwner.runTarget({
-        //   contract: tokenA,
-        //   value: locklift.utils.toNano(2.2),
-        //   method: 'ming',
-        //   params: {
-        //     amount: amount,
-        //     recipient: wallet.tokenWallet,
-        //     deployWalletValue: locklift.utils.toNano(1),
-        //     remainingGasTo: rootOwner.address,
-        //     notify: true,
-        //     payload: EMPTY_TVM_CELL
-        //   }
-        //   });  
-
-      // const tx = await tokenA.methods.mint({
-      //   amount: amount,
-      //   recipient: wallet.tokenWallet,
-      //   deployWalletValue: locklift.utils.toNano(0.1),
-      //   remainingGasTo: wallet.tokenWallet,
-      //   notify: true,
-      //   payload: EMPTY_TVM_CELL
-      // }).sendExternal({ publicKey: signer.publicKey});
-      
-      // console.log(tx);
-      
-      // const walletContract = await locklift.factory.getDeployedContract("TokenWallet", wallet.tokenWallet);
-      // const walletTokenBalance = await walletContract.methods.balance({answerId: 0}).sendExternal({ publicKey: signer.publicKey});
-
-
-      // const userBalance = await locklift.provider.getBalance(account.address);
-      // const walletBalance = await locklift.provider.getBalance(wallet.tokenWallet);
-
-      // console.log(`balance = ${userBalance} - ${walletBalance} - ${walletTokenBalance.transaction.}`);
-
-      // await account.runTarget({
-      //   contract: tokenA,
-      //   method: 'mint',
-      //   params: {
-      //     amount: amount,
-      //     recipient: account.address,
-      //     deployWalletValue: locklift.utils.toNano(2),
-      //     remainingGasTo: account.address,
-      //     notify: false,
-      //     payload: EMPTY_TVM_CELL
-      //   },
-      //   value: locklift.utils.toNano(0.5),
-      //   keypat
-      // });
     });
 
-    it("Interact with contract", async function () {
-      const NEW_STATE = 1;
+    it("SendTrasfer and check balances (In comming...)", async function () {
 
-      console.log('Hello');
+      const accountwallet = await tokenA.methods.walletOf({answerId: 1,walletOwner: account.address}).call();
+      console.log(`Account Wallet = ${accountwallet.value0}`);
+      const walletContract = await locklift.factory.getDeployedContract("TokenWallet", accountwallet.value0);
+      let balance = await walletContract.methods.balance({answerId: 1}).call();
+      expect(balance.value0).to.be.equal('8000000000');
+
+      const accountwalletB = await tokenB.methods.walletOf({answerId: 1,walletOwner: account.address}).call();
+      console.log(`Account Wallet B = ${accountwalletB.value0}`);
+      const walletContractB = await locklift.factory.getDeployedContract("TokenWallet", accountwalletB.value0);
+      let balanceb = await walletContractB.methods.balance({answerId: 1}).call();
+      expect(balanceb.value0).to.be.equal('8000000000');
+  
+
+      const accountFactory = locklift.factory.getAccountsFactory("Wallet");
+      const rootOwner = accountFactory.getAccount(account.address, signer.publicKey);
+
+      await locklift.tracing.trace(rootOwner.runTarget({contract: walletContract, value: locklift.utils.toNano(7), bounce: false, flags: 0}, contract => 
+       contract.methods.transfer({
+          recipient: bridge.address,
+          amount: "10000",
+          notify: true,
+          deployWalletValue: "0",
+          remainingGasTo: walletContract.address,
+          payload: ""
+        })))
+
+      balance = await walletContract.methods.balance({answerId: 1}).call();
+      expect(balance.value0).to.be.equal('7999990000');
+      balanceb = await walletContractB.methods.balance({answerId: 1}).call();
+      expect(balance.value0).to.be.equal('8000010000');
+
+      });
+    
+      const NEW_STATE = 1;
     });
   });
-});

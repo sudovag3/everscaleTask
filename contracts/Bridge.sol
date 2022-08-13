@@ -1,6 +1,7 @@
 pragma ever-solidity >= 0.61.2;
 pragma AbiHeader expire;
 pragma AbiHeader pubkey;
+import "locklift/src/console.sol";
 // import { IAcceptTokensTransferCallback }; 
 // Решение тестового задания для EverScale
 import "broxus-ton-tokens-contracts/contracts/libraries/TokenMsgFlag.sol";
@@ -28,33 +29,44 @@ contract Bridge is IAcceptTokensTransferCallback {
     //Вот тут сложнее. Нам нужно в дальнейшем вызывать функцию mint() у контракта токенов, которые хотим получить. 
     //Следовательно нам для этого нужен по крайней мере адресс контракта токена B  
     address public TOKEN_B_ADDRESS;
+    address public TOKEN_A_ADDRESS;
+    address public walletB;
     /*этот адрес контракт должен узнать у TokenRoot в конструкторе вызвав ITokenRoot.deployWallet и приняв ответ в каллбэке */
     //А это адресс токен-кошелька контракта, с которым мы будем сверять адрес отправителя callback-а 
     address public tokenRootMaster;
 
 
 
-    constructor() public {
+
+    constructor(address tokenA, address tokenB) public {
         /*в целом тут не нужна такая проверка, так как далее ключ не будет использоваться для управления контрактом*/
         //Проверяем наличие пабКея и его валидность
         // require(tvm.pubkey() != 0, BridgeContractErrors.error_tvm_pubkey_not_set);
         // require(msg.pubkey() == tvm.pubkey(), 102);
-
+        TOKEN_A_ADDRESS = tokenA;
+        TOKEN_B_ADDRESS = tokenB;
         /*тут верно, так как деплой внешним сообщением*/
         //Даём "Добро" на оплату транзакций
         tvm.accept();
 
-        // address walletAdrress = ITokenRoot(TOKEN_A_ADDRESS).deployWallet
-        // {
-        //     flag: TokenMsgFlag.SENDER_PAYS_FEES
-        // }
-        //     (
-        //     address(this),
-        //     0
-        //     );
-        // tokenRootMaster = walletAddress
+        ITokenRoot(TOKEN_A_ADDRESS).deployWallet
+        {   
+            value: 10000000000,
+            flag: TokenMsgFlag.SENDER_PAYS_FEES,
+            callback: onGetDeployedA
+        }
+            (
+            address(this),
+            10000000
+            );
+  
     }
 
+    function onGetDeployedA(
+    address _address
+    ) public {
+        tokenRootMaster = _address;
+    }
 
     //Вот и главный герой
     //Исходя из требований по заданию все параметры и названия взял из интерфейса
@@ -70,7 +82,7 @@ contract Bridge is IAcceptTokensTransferCallback {
         //Сомневаюсь в правильности проверки, объясню:
         // 1) Мы проверяем, что колбэк отправлен с того же контракта, который был указан при создании нашего контракта (msg.sender == tokenRootMaster)
         // 2) Мы проверяем, что данные с колбэка соответсвуют данным с нашего контракта (msg.sender == tokenRoot)
-        require(msg.sender == tokenRootMaster && msg.sender == tokenRoot, BridgeContractErrors.error_message_internal_transfer_bad_sender);
+        require(msg.sender == tokenRootMaster, BridgeContractErrors.error_message_internal_transfer_bad_sender);
         
         //Прибавляем себе баланс в размере указанного эмаунта
         total_supply += amount; 
@@ -79,8 +91,9 @@ contract Bridge is IAcceptTokensTransferCallback {
         //Вообще не уверен над реализацией...
         //Вызываем функцию mint в контракте токена B 
         ITokenRoot(TOKEN_B_ADDRESS).mint{
-            flag: TokenMsgFlag.SENDER_PAYS_FEES
-        }(amount, senderWallet, 0, address(this), false, payload);
+            flag: 1,
+            value: 0.5 ton
+         }(amount, senderWallet, 0.3 ton, address(this), true, payload);
 
     }
 }
