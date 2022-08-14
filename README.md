@@ -4,4 +4,5 @@ EverScale task
 
 Быстрый старт
 -------
-![Everscale Owerview Task (1)](https://user-images.githubusercontent.com/44347958/184531923-e2615f63-51de-44ef-87c3-60a20cc2e905.svg)
+
+![Everscale Owerview Task (2)](https://user-images.githubusercontent.com/44347958/184532002-6491a325-28e5-4198-bf77-234a7af4cd52.svg)
