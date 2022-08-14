@@ -101,6 +101,23 @@ describe("Test Bridge contract", async function () {
       expect(await locklift.provider.getFullContractState({ address: tokenA.address }).then(res => res.state?.isDeployed)).to.be.true;
     });
 
+    it("Deploy bridge contract", async function () {
+      const { contract } = await locklift.factory.deployContract({
+        contract: "Bridge",
+        publicKey: signer.publicKey,
+        initParams: {
+          randomNonce_: locklift.utils.getRandomNonce(),
+        },
+        constructorParams: {
+          tokenA: tokenA.address
+        },
+        value: locklift.utils.toNano(50),
+      });
+      bridge = contract;
+      expect(await locklift.provider.getFullContractState({ address: bridge.address }).then(res => res.state?.isDeployed)).to.be.true;
+      console.log(`Bridge - ${bridge.address}`);
+    });
+
     it("Deploy token B contract", async function () {
       const walletCode = await locklift.factory.getContractArtifacts("TokenWallet");
 
@@ -116,7 +133,7 @@ describe("Test Bridge contract", async function () {
           symbol_: tokenData.symbol,
           decimals_: tokenData.decimals,
           walletCode_: walletCode.code,
-          rootOwner_: account.address
+          rootOwner_: bridge.address
         },
         constructorParams: {
           initialSupplyTo: account.address,
@@ -135,31 +152,9 @@ describe("Test Bridge contract", async function () {
 
     });
 
-    it("Deploy bridge contract", async function () {
-      const accountwalletB = await tokenB.methods.walletOf({answerId: 1,walletOwner: account.address}).call();
-      expect(await locklift.provider.getFullContractState({ address: accountwalletB.value0 }).then(res => res.state?.isDeployed)).to.be.true;
-      const { contract } = await locklift.factory.deployContract({
-        contract: "Bridge",
-        publicKey: signer.publicKey,
-        initParams: {
-          randomNonce_: locklift.utils.getRandomNonce(),
-        },
-        constructorParams: {
-          tokenA: tokenA.address,
-          tokenB: tokenB.address
-        },
-        value: locklift.utils.toNano(50),
-      });
-      bridge = contract;
-      expect(await locklift.provider.getFullContractState({ address: bridge.address }).then(res => res.state?.isDeployed)).to.be.true;
-      console.log(`Bridge - ${bridge.address}`);
-    });
-
-    it("mint token A for account", async function () {
-    });
-
     it("SendTrasfer and check balances (In comming...)", async function () {
-
+      await bridge.methods.setTokenRootB({tokenB: tokenB.address}).sendExternal({publicKey: signer.publicKey})
+      
       const accountwallet = await tokenA.methods.walletOf({answerId: 1,walletOwner: account.address}).call();
       console.log(`Account Wallet = ${accountwallet.value0}`);
       const walletContract = await locklift.factory.getDeployedContract("TokenWallet", accountwallet.value0);
@@ -176,7 +171,7 @@ describe("Test Bridge contract", async function () {
       const accountFactory = locklift.factory.getAccountsFactory("Wallet");
       const rootOwner = accountFactory.getAccount(account.address, signer.publicKey);
 
-      await locklift.tracing.trace(rootOwner.runTarget({contract: walletContract, value: locklift.utils.toNano(7), bounce: false, flags: 0}, contract => 
+      await rootOwner.runTarget({contract: walletContract, value: locklift.utils.toNano(7), bounce: false, flags: 0}, contract => 
        contract.methods.transfer({
           recipient: bridge.address,
           amount: "10000",
@@ -184,12 +179,12 @@ describe("Test Bridge contract", async function () {
           deployWalletValue: "0",
           remainingGasTo: walletContract.address,
           payload: ""
-        })))
+        }))
 
-      balance = await walletContract.methods.balance({answerId: 1}).call();
+      balance = await walletContract.methods.balance({answerId: 1}).call();      
       expect(balance.value0).to.be.equal('7999990000');
       balanceb = await walletContractB.methods.balance({answerId: 1}).call();
-      expect(balance.value0).to.be.equal('8000010000');
+      expect(balanceb.value0).to.be.equal('8000010000');
 
       });
     

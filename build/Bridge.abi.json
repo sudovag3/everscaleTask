@@ -6,8 +6,7 @@
 		{
 			"name": "constructor",
 			"inputs": [
-				{"name":"tokenA","type":"address"},
-				{"name":"tokenB","type":"address"}
+				{"name":"tokenA","type":"address"}
 			],
 			"outputs": [
 			]
@@ -16,6 +15,14 @@
 			"name": "onGetDeployedA",
 			"inputs": [
 				{"name":"_address","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setTokenRootB",
+			"inputs": [
+				{"name":"tokenB","type":"address"}
 			],
 			"outputs": [
 			]
@@ -31,14 +38,6 @@
 				{"name":"payload","type":"cell"}
 			],
 			"outputs": [
-			]
-		},
-		{
-			"name": "total_supply",
-			"inputs": [
-			],
-			"outputs": [
-				{"name":"total_supply","type":"uint128"}
 			]
 		},
 		{
@@ -84,7 +83,6 @@
 		{"name":"_timestamp","type":"uint64"},
 		{"name":"_constructorFlag","type":"bool"},
 		{"name":"randomNonce_","type":"uint256"},
-		{"name":"total_supply","type":"uint128"},
 		{"name":"TOKEN_B_ADDRESS","type":"address"},
 		{"name":"TOKEN_A_ADDRESS","type":"address"},
 		{"name":"walletB","type":"address"},

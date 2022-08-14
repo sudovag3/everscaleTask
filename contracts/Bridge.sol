@@ -11,6 +11,7 @@ import 'broxus-ton-tokens-contracts/contracts/interfaces/ITokenRoot.sol';
 library BridgeContractErrors {
   uint8 constant error_tvm_pubkey_not_set = 100;
   uint8 constant error_message_sender_is_not_my_owner = 101;
+  uint8 constant error_message_sender_is_not_token_root = 104;
   uint8 constant error_message_internal_transfer_bad_sender = 105;
 }
 
@@ -20,8 +21,6 @@ library BridgeContractErrors {
 contract Bridge is IAcceptTokensTransferCallback {
     /*стоит добавить static nonce и проставлять его случайным образом, чтобы при деплое контракт попадал на разные адреса, т к значения static влияют на адрес*/
     uint256 static randomNonce_;
-    //Так как по заданию контракт "будет принимать токены А", значит для их баланса нужна отдельная переменная
-    uint128 public total_supply;
 
     /*тут проблема курицы и яйца, с одной стороны мы могли бы передать это как static переменную или параметр конструктора, но тогда такой адрес нам должен быть заранее известен, а значит tokenRoot задеплоен.
       Вот только mint может вызывать только владелец, а значит в скрипте нужно передать владельца TokenRoot */
@@ -38,13 +37,12 @@ contract Bridge is IAcceptTokensTransferCallback {
 
 
 
-    constructor(address tokenA, address tokenB) public {
+    constructor(address tokenA) public {
         /*в целом тут не нужна такая проверка, так как далее ключ не будет использоваться для управления контрактом*/
         //Проверяем наличие пабКея и его валидность
-        // require(tvm.pubkey() != 0, BridgeContractErrors.error_tvm_pubkey_not_set);
-        // require(msg.pubkey() == tvm.pubkey(), 102);
+        require(tvm.pubkey() != 0, BridgeContractErrors.error_tvm_pubkey_not_set);
         TOKEN_A_ADDRESS = tokenA;
-        TOKEN_B_ADDRESS = tokenB;
+        // TOKEN_B_ADDRESS = tokenB;
         /*тут верно, так как деплой внешним сообщением*/
         //Даём "Добро" на оплату транзакций
         tvm.accept();
@@ -62,10 +60,21 @@ contract Bridge is IAcceptTokensTransferCallback {
   
     }
 
+    modifier onlyOwner() {
+        require(tvm.pubkey() != 0 && tvm.pubkey() == msg.pubkey(), BridgeContractErrors.error_message_sender_is_not_my_owner);
+    _;
+  }
+
     function onGetDeployedA(
     address _address
     ) public {
+        require(msg.sender == TOKEN_A_ADDRESS, BridgeContractErrors.error_message_sender_is_not_token_root);
         tokenRootMaster = _address;
+    }
+
+    function setTokenRootB(address tokenB) public onlyOwner {
+    tvm.accept();
+    TOKEN_B_ADDRESS = tokenB;
     }
 
     //Вот и главный герой
@@ -84,16 +93,14 @@ contract Bridge is IAcceptTokensTransferCallback {
         // 2) Мы проверяем, что данные с колбэка соответсвуют данным с нашего контракта (msg.sender == tokenRoot)
         require(msg.sender == tokenRootMaster, BridgeContractErrors.error_message_internal_transfer_bad_sender);
         
-        //Прибавляем себе баланс в размере указанного эмаунта
-        total_supply += amount; 
-
         /* все так, только флаги нужны к вызову */
         //Вообще не уверен над реализацией...
         //Вызываем функцию mint в контракте токена B 
+
         ITokenRoot(TOKEN_B_ADDRESS).mint{
-            flag: 1,
-            value: 0.5 ton
-         }(amount, senderWallet, 0.3 ton, address(this), true, payload);
+            flag: 0,
+            value: 1 ton
+         }(amount, sender, 0, address(this), true, payload);
 
     }
 }
