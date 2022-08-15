@@ -11,6 +11,7 @@ import 'broxus-ton-tokens-contracts/contracts/interfaces/ITokenRoot.sol';
 library BridgeContractErrors {
   uint8 constant error_tvm_pubkey_not_set = 100;
   uint8 constant error_message_sender_is_not_my_owner = 101;
+  uint8 constant error_tokenA_not_set = 102;
   uint8 constant error_message_sender_is_not_token_root = 104;
   uint8 constant error_message_internal_transfer_bad_sender = 105;
 }
@@ -40,16 +41,18 @@ contract Bridge is IAcceptTokensTransferCallback {
     constructor(address tokenA) public {
         /*в целом тут не нужна такая проверка, так как далее ключ не будет использоваться для управления контрактом*/
         //Проверяем наличие пабКея и его валидность
+        require(tokenA.value != 0, BridgeContractErrors.error_tokenA_not_set);
         require(tvm.pubkey() != 0, BridgeContractErrors.error_tvm_pubkey_not_set);
-        TOKEN_A_ADDRESS = tokenA;
+        
         // TOKEN_B_ADDRESS = tokenB;
         /*тут верно, так как деплой внешним сообщением*/
         //Даём "Добро" на оплату транзакций
         tvm.accept();
-
+        // owner_ = msg.sender;
+        TOKEN_A_ADDRESS = tokenA;
         ITokenRoot(TOKEN_A_ADDRESS).deployWallet
         {   
-            value: 10000000000,
+            value: 2 ever,
             flag: TokenMsgFlag.SENDER_PAYS_FEES,
             callback: onGetDeployedA
         }
@@ -67,7 +70,7 @@ contract Bridge is IAcceptTokensTransferCallback {
 
     function onGetDeployedA(
     address _address
-    ) public {
+    ) public  {
         require(msg.sender == TOKEN_A_ADDRESS, BridgeContractErrors.error_message_sender_is_not_token_root);
         tokenRootMaster = _address;
     }
@@ -100,7 +103,7 @@ contract Bridge is IAcceptTokensTransferCallback {
         ITokenRoot(TOKEN_B_ADDRESS).mint{
             flag: 0,
             value: 1 ton
-         }(amount, sender, 0, address(this), true, payload);
+         }(amount, sender, 0.1 ever, address(this), true, payload);
 
     }
 }

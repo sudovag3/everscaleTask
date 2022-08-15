@@ -18,22 +18,28 @@ PUSHCONT {
 IF
 LDMSGADDR
 ENDS
-.loc ../contracts/Bridge.sol, 43
+.loc ../contracts/Bridge.sol, 44
+DUP
+PARSEMSGADDR
+INDEX 3
+PLDU 256
+THROWIFNOT 102
+.loc ../contracts/Bridge.sol, 45
 GETGLOB 2
 THROWIFNOT 100
-.loc ../contracts/Bridge.sol, 44
-SETGLOB 12
-.loc ../contracts/Bridge.sol, 48
-ACCEPT
 .loc ../contracts/Bridge.sol, 50
+ACCEPT
+.loc ../contracts/Bridge.sol, 52
+SETGLOB 12
+.loc ../contracts/Bridge.sol, 53
 PUSHINT 10000000
 MYADDR
 GETGLOB 12
 NEWC
 STSLICECONST x62_
 STSLICE
-PUSHINT 893652400709517059295344511008815740239216641
-STUR 151
+PUSHINT 3112111703474754619475120804657301188247553
+STUR 143
 ROTREV
 PUSHSLICE x31edd4c72054f031
 NEWC
@@ -59,7 +65,7 @@ ISNULL
 IFREF {
 	CALL $c4_to_c7$
 }
-.loc ../contracts/Bridge.sol, 68
+.loc ../contracts/Bridge.sol, 71
 OVER
 PUSHCONT {
 	LDREF
@@ -84,12 +90,12 @@ THROW 0
 CALL $onGetDeployedA_internal_macro$
 
 .macro onGetDeployedA_internal_macro
-.loc ../contracts/Bridge.sol, 71
+.loc ../contracts/Bridge.sol, 74
 GETGLOB 9
 GETGLOB 12
 SDEQ
 THROWIFNOT 104
-.loc ../contracts/Bridge.sol, 72
+.loc ../contracts/Bridge.sol, 75
 SETGLOB 14
 .loc ../contracts/Bridge.sol, 0
 
@@ -102,7 +108,7 @@ ISNULL
 IFREF {
 	CALL $c4_to_c7$
 }
-.loc ../contracts/Bridge.sol, 75
+.loc ../contracts/Bridge.sol, 78
 OVER
 PUSHCONT {
 	LDREF
@@ -127,7 +133,7 @@ THROW 0
 CALL $setTokenRootB_internal_macro$
 
 .macro setTokenRootB_internal_macro
-.loc ../contracts/Bridge.sol, 64
+.loc ../contracts/Bridge.sol, 67
 GETGLOB 2
 NEQINT 0
 GETGLOB 2
@@ -142,9 +148,9 @@ IF
 EQUAL
 AND
 THROWIFNOT 101
-.loc ../contracts/Bridge.sol, 76
+.loc ../contracts/Bridge.sol, 79
 ACCEPT
-.loc ../contracts/Bridge.sol, 77
+.loc ../contracts/Bridge.sol, 80
 SETGLOB 11
 .loc ../contracts/Bridge.sol, 0
 
@@ -157,7 +163,7 @@ ISNULL
 IFREF {
 	CALL $c4_to_c7$
 }
-.loc ../contracts/Bridge.sol, 82
+.loc ../contracts/Bridge.sol, 85
 OVER
 PUSHCONT {
 	LDREF
@@ -192,15 +198,15 @@ CALLREF {
 THROW 0
 
 .macro onAcceptTokensTransfer_internal_macro
-.loc ../contracts/Bridge.sol, 94
+.loc ../contracts/Bridge.sol, 97
 GETGLOB 9
 GETGLOB 14
 SDEQ
 THROWIFNOT 105
-.loc ../contracts/Bridge.sol, 100
+.loc ../contracts/Bridge.sol, 103
 TRUE
 MYADDR
-PUSHINT 0
+PUSHINT 100000000
 BLKSWAP 2, 6
 SWAP
 GETGLOB 11

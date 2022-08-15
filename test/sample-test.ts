@@ -106,7 +106,7 @@ describe("Test Bridge contract", async function () {
         contract: "Bridge",
         publicKey: signer.publicKey,
         initParams: {
-          randomNonce_: locklift.utils.getRandomNonce(),
+          randomNonce_: locklift.utils.getRandomNonce()
         },
         constructorParams: {
           tokenA: tokenA.address
@@ -154,7 +154,7 @@ describe("Test Bridge contract", async function () {
 
     it("SendTrasfer and check balances (In comming...)", async function () {
       await bridge.methods.setTokenRootB({tokenB: tokenB.address}).sendExternal({publicKey: signer.publicKey})
-      
+
       const accountwallet = await tokenA.methods.walletOf({answerId: 1,walletOwner: account.address}).call();
       console.log(`Account Wallet = ${accountwallet.value0}`);
       const walletContract = await locklift.factory.getDeployedContract("TokenWallet", accountwallet.value0);
@@ -170,7 +170,6 @@ describe("Test Bridge contract", async function () {
 
       const accountFactory = locklift.factory.getAccountsFactory("Wallet");
       const rootOwner = accountFactory.getAccount(account.address, signer.publicKey);
-
       await rootOwner.runTarget({contract: walletContract, value: locklift.utils.toNano(7), bounce: false, flags: 0}, contract => 
        contract.methods.transfer({
           recipient: bridge.address,
